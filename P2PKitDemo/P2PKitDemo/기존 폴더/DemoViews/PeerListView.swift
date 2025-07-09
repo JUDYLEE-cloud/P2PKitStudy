@@ -61,8 +61,10 @@ struct PeerListView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Me").p2pTitleStyle()
+            Text("Me")
+                .p2pTitleStyle()
             Text(peerSummaryText(P2PNetwork.myPeer))
+            
             HStack {
                 Button("Change Name") {
                     model.changeName()
@@ -70,7 +72,8 @@ struct PeerListView: View {
                 Button("Reset Session") {
                     model.resetSession()
                 }
-            }.p2pSecondaryButtonStyle()
+            }
+            .p2pSecondaryButtonStyle()
 
             Button("Make Me Host 🚀") {
                 P2PNetwork.makeMeHost()
