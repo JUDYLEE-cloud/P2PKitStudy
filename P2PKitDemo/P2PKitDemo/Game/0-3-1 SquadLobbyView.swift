@@ -8,8 +8,8 @@
 import SwiftUI
 import P2PKit
 
-struct TripleLobbyView<Content: View>: View {
-    @StateObject var connected: TripleConnectedPeers
+struct SquadLobbyView<Content: View>: View {
+    @StateObject var connected: SquadConnectedPeers
     @ViewBuilder var content: () -> Content
     
     var body: some View {
@@ -24,7 +24,7 @@ struct TripleLobbyView<Content: View>: View {
                         Text(peerSummaryText(peer))
                     }
                     
-                    if connected.peers.count < 2 {
+                    if connected.peers.count < 3 {
                         ProgressView()
                     }
                     
@@ -52,7 +52,7 @@ struct TripleLobbyView<Content: View>: View {
     }
 }
 
-class TripleConnectedPeers: ObservableObject {
+class SquadConnectedPeers: ObservableObject {
     @Published var peers = [Peer]()
     @Published var host: Peer? = nil
     
@@ -72,7 +72,7 @@ class TripleConnectedPeers: ObservableObject {
     }
 }
 
-extension TripleConnectedPeers: P2PNetworkPeerDelegate {
+extension SquadConnectedPeers: P2PNetworkPeerDelegate {
     func p2pNetwork(didUpdateHost host: Peer?) {
         DispatchQueue.main.async { [weak self] in
             self?.host = host
@@ -81,7 +81,7 @@ extension TripleConnectedPeers: P2PNetworkPeerDelegate {
     
     func p2pNetwork(didUpdate peer: Peer) {
         DispatchQueue.main.async { [weak self] in
-            let limitedPeers = Array(P2PNetwork.connectedPeers.prefix(2))
+            let limitedPeers = Array(P2PNetwork.connectedPeers.prefix(3))
             self?.peers = limitedPeers
 //            if limitedPeers.count == 1 {
 //                P2PNetwork.stopAcceptingPeers()

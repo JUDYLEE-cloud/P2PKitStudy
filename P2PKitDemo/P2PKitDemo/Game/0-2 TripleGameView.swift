@@ -17,45 +17,50 @@ struct TripleGameView: View {
 
     var body: some View {
         ZStack {
-            if state == .unstarted {
+            VStack {
                 Text("3인 게임")
-                TripleLobbyView(connected: connected) {
-                    if connected.peers.count == 2 && P2PNetwork.connectedPeers.count == 2 {
-                        if let countdown = countdown {
-                            Text("게임이 \(countdown)초 후 시작됩니다")
-                                .font(.title)
-                                .padding()
-                        } else {
-                            Text("5초 후 게임이 시작됩니다")
-                                .font(.title)
-                                .padding()
-                        }
-                    }
-                }
-            } else {
-                GameView()
-
-                if state == .pausedGame {
+                Text("채널: \(P2PConstants.networkChannelName)")
+                
+                if state == .unstarted {
+                    Text("3인 게임")
                     TripleLobbyView(connected: connected) {
-                        BigButton("Continue Room") {
-                            P2PNetwork.makeMeHost()
+                        if connected.peers.count == 2 && P2PNetwork.connectedPeers.count == 2 {
+                            if let countdown = countdown {
+                                Text("게임이 \(countdown)초 후 시작됩니다")
+                                    .font(.title)
+                                    .padding()
+                            } else {
+                                Text("5초 후 게임이 시작됩니다")
+                                    .font(.title)
+                                    .padding()
+                            }
                         }
                     }
-                    .background(.white)
+                } else {
+                    GameView()
+
+                    if state == .pausedGame {
+                        TripleLobbyView(connected: connected) {
+                            BigButton("Continue Room") {
+                                P2PNetwork.makeMeHost()
+                            }
+                        }
+                        .background(.white)
+                    }
                 }
             }
+
         }
         .onAppear {
-            setupP2PKit(channel: "triple-game")
             connected.start()
         }
-        .onChange(of: connected.peers.count) { newCount in
-            if newCount == 0 && state == .startedGame {
+        .onChange(of: connected.peers.count) {
+            let connectedCount = connected.peers.count
+            if connectedCount == 0 && state == .startedGame {
                 state = .pausedGame
-            } else if newCount == 2 && state == .unstarted {
+            } else if connectedCount == 2 && state == .unstarted {
                 startCountdown()
             } else {
-                // Reset countdown if count deviates from expected 3 players
                 countdown = nil
                 countdownTimer?.invalidate()
                 countdownTimer = nil

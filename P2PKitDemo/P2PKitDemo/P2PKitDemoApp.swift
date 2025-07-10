@@ -22,11 +22,6 @@ struct P2PKitDemoApp: App {
     }
 }
 
-func setupP2PKit() {
-    P2PConstants.networkChannelName = "my-p2p-service"
-    P2PConstants.loggerEnabled = true
-}
-
 struct RootView: View {
     @StateObject private var router = AppRouter()
     // @StateObject private var locationManager = LocationManager()
@@ -34,10 +29,9 @@ struct RootView: View {
     var body: some View {
         Group {
             TabView() {
-                
                 NavigationStack {
                     switch router.currentScreen {
-                    case .gameStart(let id):
+                    case .gameStart:
                         GameStartTab()
                     case .duo:
                         DuoGameView()
@@ -63,7 +57,8 @@ struct RootView: View {
         }
         .tint(.mint)
         .task {
-            setupP2PKit()
+            P2PConstants.networkChannelName = "my-p2p-2p"
+            P2PConstants.loggerEnabled = true
         }
     }
         
@@ -81,4 +76,42 @@ struct RootView: View {
 
 #Preview {
     RootView()
+}
+
+struct FullscreenWrapperView<Content: View>: UIViewControllerRepresentable {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    func makeUIViewController(context: Context) -> UIHostingController<ContentWithHomeIndicator> {
+        return UIHostingController(rootView: ContentWithHomeIndicator(content: content))
+    }
+
+    func updateUIViewController(_ uiViewController: UIHostingController<ContentWithHomeIndicator>, context: Context) {
+        uiViewController.rootView = ContentWithHomeIndicator(content: content)
+    }
+
+    struct ContentWithHomeIndicator: View {
+        let content: Content
+
+        var body: some View {
+            content
+                .edgesIgnoringSafeArea(.all)
+                .background(HomeIndicatorHider())
+        }
+    }
+
+    class HomeIndicatorHiderViewController: UIViewController {
+        override var prefersHomeIndicatorAutoHidden: Bool { true }
+    }
+
+    struct HomeIndicatorHider: UIViewControllerRepresentable {
+        func makeUIViewController(context: Context) -> HomeIndicatorHiderViewController {
+            HomeIndicatorHiderViewController()
+        }
+
+        func updateUIViewController(_ uiViewController: HomeIndicatorHiderViewController, context: Context) { }
+    }
 }

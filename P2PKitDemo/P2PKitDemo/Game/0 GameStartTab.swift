@@ -31,14 +31,17 @@ struct GameStartTab: View {
                 VStack(spacing: 30) {
                     Button("2인 게임") {
                         P2PNetwork.maxConnectedPeers = 2
+                        P2PConstants.setGamePlayerCount(2)
                         selectedGame = .duo
                     }
                     Button("3인 게임") {
                         P2PNetwork.maxConnectedPeers = 3
+                        P2PConstants.setGamePlayerCount(3)
                         selectedGame = .triple
                     }
                     Button("4인 게임") {
                         P2PNetwork.maxConnectedPeers = 4
+                        P2PConstants.setGamePlayerCount(4)
                         selectedGame = .squad
                     }
                 }

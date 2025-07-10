@@ -11,7 +11,11 @@ import Foundation
 import MultipeerConnectivity
 
 public struct P2PConstants {
-    public static var networkChannelName = "my-p2p-service"
+    public static var networkChannelName = "my-p2p-2p"
+    public static func setGamePlayerCount(_ count: Int) {
+            networkChannelName = "my-p2p-\(count)p"
+        }
+    
     public static var loggerEnabled = true
     
     struct UserDefaultsKeys {

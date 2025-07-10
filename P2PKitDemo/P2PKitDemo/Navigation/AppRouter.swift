@@ -8,14 +8,14 @@ import Foundation
 import SwiftUI
 
 enum AppScreen {
-    case gameStart(id: UUID = UUID())
+    case gameStart
     case duo
     case triple
     case squad
 }
 
 class AppRouter: ObservableObject {
-    @Published var currentScreen: AppScreen = .gameStart(id: UUID())
+    @Published var currentScreen: AppScreen = .gameStart
 }
 
 
