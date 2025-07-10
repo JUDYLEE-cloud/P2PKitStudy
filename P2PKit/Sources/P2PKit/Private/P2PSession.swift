@@ -107,7 +107,6 @@ class P2PSession: NSObject {
     }
     
     // MARK: - Sending
-    
     func send(_ encodable: Encodable, to peers: [MCPeerID] = [], reliable: Bool) {
         
         do {
@@ -176,7 +175,6 @@ class P2PSession: NSObject {
 }
 
 // MARK: - MCSessionDelegate
-
 extension P2PSession: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         prettyPrint("Session state of [\(peerID.displayName)] changed to [\(state)]")
@@ -194,6 +192,17 @@ extension P2PSession: MCSessionDelegate {
         default:
             fatalError(#function + " - Unexpected multipeer connectivity state.")
         }
+
+        // 세션에 참여한 사람이 두명 이상이면, 초과하는 참여한 사람 퇴출됨
+        if session.connectedPeers.count > P2PNetwork.maxConnectedPeers {
+            let sorted = session.connectedPeers.sorted { $0.displayName < $1.displayName }
+            let toDisconnect = sorted.suffix(from: P2PNetwork.maxConnectedPeers) // 앞의 n명만 남기고 나머지
+            for peer in toDisconnect {
+                prettyPrint(level: .error, "Too many peers. Disconnecting [\(peer.displayName)]")
+                session.cancelConnectPeer(peer)
+            }
+        }
+
         let peer = peer(for: peerID)
         peersLock.unlock()
         
@@ -283,13 +292,19 @@ extension P2PSession: MCNearbyServiceBrowserDelegate {
 }
 
 // MARK: - Advertiser Delegate
-
 extension P2PSession: MCNearbyServiceAdvertiserDelegate {
+    // 누군가 나에게 연결 요청을 보냈을 때 호출됨
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        if isNotConnected(peerID) {
-            prettyPrint("Accepting Peer invite from [\(peerID.displayName)]")
+        
+        let currentlyConnected = session.connectedPeers.count >= P2PNetwork.maxConnectedPeers
+        if isNotConnected(peerID) && !currentlyConnected {
+            prettyPrint("✅ Accepting invite from \(peerID.displayName)")
             invitationHandler(true, self.session)
+        } else {
+            prettyPrint("❌ Rejecting invite from \(peerID.displayName)")
+            invitationHandler(false, nil)
         }
+        
     }
     
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
@@ -298,7 +313,6 @@ extension P2PSession: MCNearbyServiceAdvertiserDelegate {
 }
 
 // MARK: - Private - Invite Peers
-
 extension P2PSession {
     // Call this from inside a peerLock()
     private func invitePeerIfNeeded(_ peerID: MCPeerID) {
@@ -312,6 +326,12 @@ extension P2PSession {
         guard let otherDiscoverID = discoveryInfos[peerID]?.discoveryId,
               myDiscoveryInfo.discoveryId < otherDiscoverID,
               isNotConnected(peerID) else {
+            return
+        }
+        
+        guard session.connectedPeers.count < P2PNetwork.maxConnectedPeers
+        // 이미 한 명 연결됨
+        else {
             return
         }
         

@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 5/2/24.
 //
 
+import SwiftUI
+
 import Foundation
 import MultipeerConnectivity
 
@@ -29,6 +31,9 @@ public struct EventInfo: Codable {
 }
 
 public struct P2PNetwork {
+    public static var maxConnectedPeers: Int = 2  // 기본 플레이 인원은 2명
+    
+    public static var currentTurnPlayerName = P2PSyncedObservable(name: "currentTurnPlayerName", initial: "")
     private static var session = P2PSession(myPeer: Peer.getMyPeer())
     private static let sessionListener = P2PNetworkSessionListener()
     private static let hostSelector: P2PHostSelector = {
@@ -50,7 +55,6 @@ public struct P2PNetwork {
     }
     
     // MARK: - Public P2PSession Getters
-
     public static var myPeer: Peer {
         return session.myPeer
     }
@@ -79,6 +83,13 @@ public struct P2PNetwork {
             P2PNetwork.hostSelector
             session.delegate = sessionListener
             session.start()
+        }
+        if currentTurnPlayerName.value.isEmpty {
+            // Randomly assign the first turn to one of the peers including self
+            let candidates = [myPeer] + connectedPeers
+            if let firstPlayer = candidates.randomElement() {
+                currentTurnPlayerName.value = firstPlayer.displayName
+            }
         }
     }
     
@@ -174,6 +185,13 @@ private class P2PNetworkSessionListener {
 extension P2PNetworkSessionListener: P2PSessionDelegate {
     func p2pSession(_ session: P2PSession, didUpdate peer: Peer) {
         guard !P2PNetwork.soloMode else { return }
+
+        if P2PNetwork.currentTurnPlayerName.value.isEmpty {
+            let candidates = [P2PNetwork.myPeer] + P2PNetwork.connectedPeers
+            if let firstPlayer = candidates.randomElement() {
+                P2PNetwork.currentTurnPlayerName.value = firstPlayer.displayName
+            }
+        }
 
         for peerDelegate in _peerDelegates {
             peerDelegate?.p2pNetwork(didUpdate: peer)
