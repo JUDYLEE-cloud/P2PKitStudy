@@ -6,6 +6,14 @@
 	<array>
 		<string>_my-p2p-service._tcp</string>
 		<string>_my-p2p-service._udp</string>
+		<string>_my-p2p-2p._tcp</string>
+		<string>_my-p2p-2p._udp</string>
+		<string>_my-p2p-3p._tcp</string>
+		<string>_my-p2p-3p._udp</string>
+		<string>_my-p2p-4p._tcp</string>
+		<string>_my-p2p-4p._udp</string>
 	</array>
+	<key>CFBundleIdentifier</key>
+	<string></string>
 </dict>
 </plist>

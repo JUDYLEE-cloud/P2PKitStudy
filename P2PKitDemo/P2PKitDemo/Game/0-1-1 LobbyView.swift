@@ -9,7 +9,7 @@ import SwiftUI
 import P2PKit
 
 struct LobbyView<Content: View>: View {
-    @StateObject var connected: ConnectedPeers
+    @StateObject var connected: DuoConnectedPeers
     @ViewBuilder var content: () -> Content
     
     var body: some View {
@@ -18,14 +18,15 @@ struct LobbyView<Content: View>: View {
                 Text("Me").p2pTitleStyle()
                 Text(peerSummaryText(P2PNetwork.myPeer))
                 
-                if connected.peers.isEmpty {
-                    Text("Searching for Players...").p2pTitleStyle()
-                    ProgressView()
-                } else {
+                if connected.peers.count == 1 {
                     Text("Connected Players").p2pTitleStyle()
-                    ForEach(connected.peers, id: \.peerID) { peer in
+                    ForEach(connected.peers.prefix(1), id: \.peerID) { peer in
                         Text(peerSummaryText(peer))
                     }
+                } else {
+                    Text("Searching for Players...")
+                        .p2pTitleStyle()
+                    ProgressView()
                 }
             }
             Spacer()
@@ -41,18 +42,25 @@ struct LobbyView<Content: View>: View {
     }
     
     private func peerSummaryText(_ peer: Peer) -> String {
+        // 호스트한테 붙임
         let isHostString = connected.host?.peerID == peer.peerID ? " 🚀" : ""
         return peer.displayName + isHostString
     }
 }
 
-class ConnectedPeers: ObservableObject {
+class DuoConnectedPeers: ObservableObject {
     @Published var peers = [Peer]()
     @Published var host: Peer? = nil
     
     init() {
+//        P2PNetwork.addPeerDelegate(self)
+//        p2pNetwork(didUpdate: P2PNetwork.myPeer)
+    }
+    
+    func start() {
         P2PNetwork.addPeerDelegate(self)
         p2pNetwork(didUpdate: P2PNetwork.myPeer)
+        P2PNetwork.start()
     }
     
     deinit {
@@ -60,7 +68,7 @@ class ConnectedPeers: ObservableObject {
     }
 }
 
-extension ConnectedPeers: P2PNetworkPeerDelegate {
+extension DuoConnectedPeers: P2PNetworkPeerDelegate {
     func p2pNetwork(didUpdateHost host: Peer?) {
         DispatchQueue.main.async { [weak self] in
             self?.host = host
@@ -69,7 +77,11 @@ extension ConnectedPeers: P2PNetworkPeerDelegate {
     
     func p2pNetwork(didUpdate peer: Peer) {
         DispatchQueue.main.async { [weak self] in
-            self?.peers = P2PNetwork.connectedPeers
+            let limitedPeers = Array(P2PNetwork.connectedPeers.prefix(1))
+            self?.peers = limitedPeers
+//            if limitedPeers.count == 1 {
+//                P2PNetwork.stopAcceptingPeers()
+//            }
         }
     }
 }

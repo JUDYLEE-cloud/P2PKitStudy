@@ -66,7 +66,3 @@ struct ShowSyncedCirclesButton: View {
         }
     }
 }
-
-#Preview {
-    ContentView()
-}
