@@ -32,16 +32,19 @@ struct GameStartTab: View {
                     Button("2인 게임") {
                         P2PNetwork.maxConnectedPeers = 2
                         P2PConstants.setGamePlayerCount(2)
+                        P2PNetwork.resetSession()
                         selectedGame = .duo
                     }
                     Button("3인 게임") {
                         P2PNetwork.maxConnectedPeers = 3
                         P2PConstants.setGamePlayerCount(3)
+                        P2PNetwork.resetSession()
                         selectedGame = .triple
                     }
                     Button("4인 게임") {
                         P2PNetwork.maxConnectedPeers = 4
                         P2PConstants.setGamePlayerCount(4)
+                        P2PNetwork.resetSession()
                         selectedGame = .squad
                     }
                 }

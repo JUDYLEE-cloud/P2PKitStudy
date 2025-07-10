@@ -36,8 +36,8 @@ public struct EventInfo: Codable {
 
 public struct P2PNetwork {
     public static var maxConnectedPeers: Int = 2  // 기본 플레이 인원은 2명
-    
     public static var currentTurnPlayerName = P2PSyncedObservable(name: "currentTurnPlayerName", initial: "")
+    
     private static var session = P2PSession(myPeer: Peer.getMyPeer())
     private static let sessionListener = P2PNetworkSessionListener()
     private static let hostSelector: P2PHostSelector = {
@@ -52,6 +52,9 @@ public struct P2PNetwork {
     
     public static var host: Peer? {
         return hostSelector.host
+    }
+    public static var isHost: Bool {
+        return hostSelector.host?.id == myPeer.id
     }
         
     public static func makeMeHost() {

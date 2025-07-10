@@ -193,12 +193,13 @@ extension P2PSession: MCSessionDelegate {
             fatalError(#function + " - Unexpected multipeer connectivity state.")
         }
 
-        // 세션에 참여한 사람이 두명 이상이면, 초과하는 참여한 사람 퇴출됨
+        // 세션에 참여한 사람이 maxConnectedPeers명을 초과하면, 초과하는 참여한 사람 퇴출됨
         if session.connectedPeers.count > P2PNetwork.maxConnectedPeers {
-            let sorted = session.connectedPeers.sorted { $0.displayName < $1.displayName }
-            let toDisconnect = sorted.suffix(from: P2PNetwork.maxConnectedPeers) // 앞의 n명만 남기고 나머지
-            for peer in toDisconnect {
-                prettyPrint(level: .error, "Too many peers. Disconnecting [\(peer.displayName)]")
+            let excessPeers = session.connectedPeers.filter { peerID in
+                !connectedPeers.map(\.peerID).contains(peerID)
+            }
+            for peer in excessPeers {
+                prettyPrint(level: .error, "Exceeding max peers. Rejecting [\(peer.displayName)]")
                 session.cancelConnectPeer(peer)
             }
         }
@@ -295,16 +296,15 @@ extension P2PSession: MCNearbyServiceBrowserDelegate {
 extension P2PSession: MCNearbyServiceAdvertiserDelegate {
     // 누군가 나에게 연결 요청을 보냈을 때 호출됨
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        
-        let currentlyConnected = session.connectedPeers.count >= P2PNetwork.maxConnectedPeers
-        if isNotConnected(peerID) && !currentlyConnected {
-            prettyPrint("✅ Accepting invite from \(peerID.displayName)")
+        let totalAttemptingPeers = session.connectedPeers.count +
+            sessionStates.values.filter { $0 == .connecting }.count
+
+        if isNotConnected(peerID) && totalAttemptingPeers < P2PNetwork.maxConnectedPeers {
             invitationHandler(true, self.session)
         } else {
-            prettyPrint("❌ Rejecting invite from \(peerID.displayName)")
+            prettyPrint(level: .info, "Rejecting invitation from \(peerID.displayName). Already full.")
             invitationHandler(false, nil)
         }
-        
     }
     
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
