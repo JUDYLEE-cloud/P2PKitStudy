@@ -15,45 +15,45 @@ import P2PKit
 
 @main
 struct P2PKitDemoApp: App {
+    @StateObject private var router = AppRouter()
+    
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(router)
         }
     }
 }
 
 struct RootView: View {
-    @StateObject private var router = AppRouter()
-    // @StateObject private var locationManager = LocationManager()
+    @EnvironmentObject var router: AppRouter
     
     var body: some View {
-        Group {
-            TabView() {
-                NavigationStack {
-                    switch router.currentScreen {
-                    case .gameStart:
-                        GameStartTab()
-                    case .duo:
-                        DuoGameView()
-                    case .triple:
-                        TripleGameView()
-                    case .squad:
-                        SquadGameView()
-                    }
+        TabView {
+            Group {
+                switch router.currentScreen {
+                case .gameStart:
+                    GameStartTab()
+                case .duo:
+                    DuoGameView()
+                case .triple:
+                    TripleGameView()
+                case .squad:
+                    SquadGameView()
                 }
-                .tag(0)
-                .edgesIgnoringSafeArea(.top)
-                .tabItem {
-                    Label("Game", systemImage: "gamecontroller.fill")
-                }
-                
-                DebugTab
-                    .tag(1)
-                    .safeAreaPadding()
-                    .tabItem {
-                        Label("Debug", systemImage: "newspaper.fill")
-                    }
             }
+            .tag(0)
+            .edgesIgnoringSafeArea(.top)
+            .tabItem {
+                Label("Game", systemImage: "gamecontroller.fill")
+            }
+
+            DebugTab
+                .tag(1)
+                .safeAreaPadding()
+                .tabItem {
+                    Label("Debug", systemImage: "newspaper.fill")
+                }
         }
         .tint(.mint)
         .task {
@@ -76,4 +76,5 @@ struct RootView: View {
 
 #Preview {
     RootView()
+        .environmentObject(AppRouter())
 }

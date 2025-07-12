@@ -1,15 +1,14 @@
 //
-//  TripleGameTab.swift
+//  GameTab.swift
 //  P2PKitDemo
-//
-//  Created by 이주현 on 7/8/25.
-//
 
 import SwiftUI
 import P2PKit
 
 struct TripleGameView: View {
-    @StateObject private var connected = TripleConnectedPeers()
+    @EnvironmentObject var router: AppRouter
+
+    @StateObject private var connected = DuoConnectedPeers()
     @State private var state: TripleGameTabState = .unstarted
     
     @State private var countdown: Int? = nil
@@ -18,38 +17,46 @@ struct TripleGameView: View {
     var body: some View {
         ZStack {
             VStack {
-                Text("3인 게임")
-                Text("채널: \(P2PConstants.networkChannelName)")
-                
-                if state == .unstarted {
+                Group {
                     Text("3인 게임")
-                    TripleLobbyView(connected: connected) {
-                        if connected.peers.count == 2 && P2PNetwork.connectedPeers.count == 2 {
+                    Text("채널: \(P2PConstants.networkChannelName)")
+                    Button {
+                        P2PNetwork.outSession()
+                        connected.out()
+                        router.currentScreen = .gameStart
+                    } label: {
+                        Image(systemName: "door.left.hand.open")
+                    }
+                }
+
+                if state == .unstarted {
+                    LobbyView(connected: connected) {
+                        if connected.peers.count == 2 {
                             if let countdown = countdown {
                                 Text("게임이 \(countdown)초 후 시작됩니다")
                                     .font(.title)
                                     .padding()
                             } else {
-                                Text("5초 후 게임이 시작됩니다")
+                                Text("연결이 끊어졌습니다")
                                     .font(.title)
                                     .padding()
                             }
                         }
                     }
+                } else if state == .pausedGame {
+                    LobbyView(connected: connected) {
+                        BigButton("오류 발생. 다시 돌아가기") {
+                            P2PNetwork.outSession()
+                            P2PNetwork.removeAllDelegates()
+                            router.currentScreen = .gameStart
+                        }
+                    }
+                    .background(.white)
                 } else {
                     GameView()
-
-                    if state == .pausedGame {
-                        TripleLobbyView(connected: connected) {
-                            BigButton("Continue Room") {
-                                P2PNetwork.makeMeHost()
-                            }
-                        }
-                        .background(.white)
-                    }
                 }
             }
-
+            .border(Color.red, width: 10)
         }
         .onAppear {
             connected.start()
@@ -67,6 +74,7 @@ struct TripleGameView: View {
             }
         }
     }
+    
 
     private func BigButton(_ text: String, action: @escaping () -> Void) -> some View {
         Button(action: action, label: {
@@ -84,7 +92,7 @@ struct TripleGameView: View {
             } else {
                 timer.invalidate()
                 countdownTimer = nil
-                if connected.peers.count == 2 {
+                if connected.peers.count == 1 {
                     P2PNetwork.makeMeHost()
                     state = .startedGame
                 }

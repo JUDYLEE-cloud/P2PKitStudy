@@ -9,10 +9,25 @@ import SwiftUI
 import P2PKit
 
 struct ChangeNameView: View {
-    @State private var selectedCountry = "🇰🇷"
-    @State private var nickname = ""
+    @State private var selectedCountry: String
+    @State private var nickname: String
     var onNameChanged: () -> Void
     @Environment(\.dismiss) private var dismiss
+
+    init(onNameChanged: @escaping () -> Void) {
+        self.onNameChanged = onNameChanged
+
+        let fullName = P2PNetwork.myPeer.displayName
+        if let firstSpace = fullName.firstIndex(of: " ") {
+            let flag = String(fullName[..<firstSpace])
+            let name = String(fullName[fullName.index(after: firstSpace)...])
+            _selectedCountry = State(initialValue: flag)
+            _nickname = State(initialValue: name)
+        } else {
+            _selectedCountry = State(initialValue: "🇰🇷")
+            _nickname = State(initialValue: fullName)
+        }
+    }
     
     var body: some View {
         VStack(spacing: 20) {

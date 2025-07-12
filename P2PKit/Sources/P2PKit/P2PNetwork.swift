@@ -53,9 +53,6 @@ public struct P2PNetwork {
     public static var host: Peer? {
         return hostSelector.host
     }
-    public static var isHost: Bool {
-        return hostSelector.host?.id == myPeer.id
-    }
         
     public static func makeMeHost() {
         hostSelector.makeMeHost()
@@ -104,6 +101,17 @@ public struct P2PNetwork {
         session.connectionState(for: peer)
     }
     
+    public static func outSession(displayName: String? = nil) {
+        prettyPrint(level: .error, "♻️ Resetting Session!")
+        let oldSession = session
+        oldSession.disconnect()
+        
+        let newPeerId = MCPeerID(displayName: displayName ?? oldSession.myPeer.displayName)
+        let myPeer = Peer.resetMyPeer(with: newPeerId)
+        session = P2PSession(myPeer: myPeer)
+        session.delegate = sessionListener
+    }
+    
     public static func resetSession(displayName: String? = nil) {
         prettyPrint(level: .error, "♻️ Resetting Session!")
         let oldSession = session
@@ -115,6 +123,7 @@ public struct P2PNetwork {
         session.delegate = sessionListener
         session.start()
     }
+
     
     public static func makeBrowserViewController() -> MCBrowserViewController {
         return session.makeBrowserViewController()
@@ -128,6 +137,9 @@ public struct P2PNetwork {
     
     public static func removePeerDelegate(_ delegate: P2PNetworkPeerDelegate) {
         sessionListener.removePeerDelegate(delegate)
+    }
+    public static func removeAllDelegates() {
+        sessionListener.removeAllDelegates()
     }
 
     // MARK: - Internal - Send and Receive Events
@@ -186,6 +198,9 @@ private class P2PNetworkSessionListener {
     
     fileprivate func removePeerDelegate(_ delegate: P2PNetworkPeerDelegate) {
         _peerDelegates.remove(delegate)
+    }
+    fileprivate func removeAllDelegates() {
+        _peerDelegates = WeakArray<P2PNetworkPeerDelegate>()
     }
 }
 

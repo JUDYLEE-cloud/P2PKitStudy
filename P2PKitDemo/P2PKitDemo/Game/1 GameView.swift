@@ -8,11 +8,18 @@
 import SwiftUI
 import P2PKit
 
+enum GameResult {
+    case winner(String)
+    case draw
+}
+
 struct GameView: View {
     // 각 판의 상태 (좌표, 플레이어 이름) (예: moves.value["0,1"] = "🐸 Judy’s iPhone")
     @StateObject private var moves = P2PSyncedObservable(name: "TicTacToeMoves", initial: [String: String]())
     // 현재 턴인 플레이어의 이름
     @StateObject private var currentTurn = P2PNetwork.currentTurnPlayerName
+
+    @StateObject private var winner = P2PSyncedObservable(name: "TicTacToeWinner", initial: "")
 
     // 모든 플레이어 배열
     private var allPlayers: [Peer] {
@@ -23,58 +30,67 @@ struct GameView: View {
     }
 
     var body: some View {
-        VStack {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(allPlayers.map { $0.displayName }, id: \.self) { name in
-                    
-                    let isMe = name == myDisplayName
-                    let displayText = isMe ? "나: \(name)" : name
+        if winner.value != "" {
+            GameResultView(result: .winner(winner.value))
+        } else {
+            VStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(allPlayers.map { $0.displayName }, id: \.self) { name in
+                        
+                        let isMe = name == myDisplayName
+                        let displayText = isMe ? "나: \(name)" : name
 
-                    Text(displayText)
-                        .padding(6)
-                        .background(currentTurn.value == name ? Color.yellow.opacity(0.3) : Color.clear)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(currentTurn.value == name ? Color.orange : Color.clear, lineWidth: 2)
-                        )
-                }
-            }
-            .padding(.bottom)
-
-            ForEach(0..<3, id: \.self) { row in
-                HStack {
-                    ForEach(0..<3, id: \.self) { column in
-                        let key = "\(row),\(column)"
-                        Button(action: {
-                            // 1. 내 차례인지, 2. 칸이 비어있는지 확인
-                            if currentTurn.value == myDisplayName && moves.value[key] == nil {
-                                // 3. 칸에 내 이름을 기록
-                                moves.value[key] = myDisplayName
-
-                                // 4. 다음 차례 플레이어 지정, 다음 차례로 턴 넘김
-                                // 턴 순서는 플레이어 이름을 사전순으로 정렬해서 자동으로 결정
-                                let playerNames = allPlayers.map { $0.displayName }.sorted()
-                                if let currentIdx = playerNames.firstIndex(of: myDisplayName) {
-                                    let nextIdx = (currentIdx + 1) % playerNames.count
-                                    currentTurn.value = playerNames[nextIdx]
-                                }
-                            }
-                        }) {
-                            Text(symbolForPlayer(name: moves.value[key]))
-                                .frame(width: 60, height: 60)
-                                .background(Color.gray.opacity(0.2))
-                                .border(Color.black)
-                                .font(.largeTitle)
-                        }
-                        .disabled(currentTurn.value != myDisplayName || moves.value[key] != nil)
+                        Text(displayText)
+                            .padding(6)
+                            .background(currentTurn.value == name ? Color.yellow.opacity(0.3) : Color.clear)
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(currentTurn.value == name ? Color.orange : Color.clear, lineWidth: 2)
+                            )
                     }
                 }
-            }
+                .padding(.bottom)
 
-            Text("연결된 사람 수: \(P2PNetwork.connectedPeers.count + 1)")
+                ForEach(0..<3, id: \.self) { row in
+                    HStack {
+                        ForEach(0..<3, id: \.self) { column in
+                            let key = "\(row),\(column)"
+                            Button(action: {
+                                // 1. 내 차례인지, 2. 칸이 비어있는지 확인
+                                if currentTurn.value == myDisplayName && moves.value[key] == nil {
+                                    // 3. 칸에 내 이름을 기록
+                                    moves.value[key] = myDisplayName
+
+                                    if let winningPlayer = checkWinner() {
+                                        winner.value = winningPlayer
+                                        return
+                                    }
+
+                                    // 4. 다음 차례 플레이어 지정, 다음 차례로 턴 넘김
+                                    // 턴 순서는 플레이어 이름을 사전순으로 정렬해서 자동으로 결정
+                                    let playerNames = allPlayers.map { $0.displayName }.sorted()
+                                    if let currentIdx = playerNames.firstIndex(of: myDisplayName) {
+                                        let nextIdx = (currentIdx + 1) % playerNames.count
+                                        currentTurn.value = playerNames[nextIdx]
+                                    }
+                                }
+                            }) {
+                                Text(symbolForPlayer(name: moves.value[key]))
+                                    .frame(width: 60, height: 60)
+                                    .background(Color.gray.opacity(0.2))
+                                    .border(Color.black)
+                                    .font(.largeTitle)
+                            }
+                            .disabled(currentTurn.value != myDisplayName || moves.value[key] != nil)
+                        }
+                    }
+                }
+
+                Text("연결된 사람 수: \(P2PNetwork.connectedPeers.count + 1)")
+            }
+            .padding()
         }
-        .padding()
     }
 
     private func symbolForPlayer(name: String?) -> String {
@@ -85,9 +101,29 @@ struct GameView: View {
         }
         return "?"
     }
+
+    private func checkWinner() -> String? {
+        let lines = [
+            [(0,0), (0,1), (0,2)],
+            [(1,0), (1,1), (1,2)],
+            [(2,0), (2,1), (2,2)],
+            [(0,0), (1,0), (2,0)],
+            [(0,1), (1,1), (2,1)],
+            [(0,2), (1,2), (2,2)],
+            [(0,0), (1,1), (2,2)],
+            [(0,2), (1,1), (2,0)],
+        ]
+
+        for line in lines {
+            let names = line.map { moves.value["\($0.0),\($0.1)"] }
+            if let first = names.first, first != nil, names.allSatisfy({ $0 == first }) {
+                return first
+            }
+        }
+        return nil
+    }
 }
 
 #Preview {
     GameView()
 }
-

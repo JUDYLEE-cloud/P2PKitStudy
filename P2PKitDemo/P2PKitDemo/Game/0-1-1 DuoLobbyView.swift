@@ -29,7 +29,7 @@ struct LobbyView<Content: View>: View {
                     ProgressView()
                 }
             }
-            Spacer()
+            
             VStack(spacing: 30) {
                 content()
             }
@@ -61,6 +61,10 @@ class DuoConnectedPeers: ObservableObject {
         P2PNetwork.addPeerDelegate(self)
         p2pNetwork(didUpdate: P2PNetwork.myPeer)
         P2PNetwork.start()
+    }
+    func out() {
+        P2PNetwork.removePeerDelegate(self)
+        P2PNetwork.removeAllDelegates()
     }
     
     deinit {

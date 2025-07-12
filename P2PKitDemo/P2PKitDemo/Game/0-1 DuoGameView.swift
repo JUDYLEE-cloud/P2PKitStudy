@@ -6,6 +6,8 @@ import SwiftUI
 import P2PKit
 
 struct DuoGameView: View {
+    @EnvironmentObject var router: AppRouter
+
     @StateObject private var connected = DuoConnectedPeers()
     @State private var state: DuoGameTabState = .unstarted
     
@@ -15,9 +17,19 @@ struct DuoGameView: View {
     var body: some View {
         ZStack {
             VStack {
-                Text("2인 게임")
-                Text("채널: \(P2PConstants.networkChannelName)")
-                
+                Group {
+                    Text("2인 게임")
+                    Text("채널: \(P2PConstants.networkChannelName)")
+                    Button {
+                        P2PNetwork.outSession()
+                        // connected.out()
+                        P2PNetwork.removeAllDelegates()
+                        router.currentScreen = .gameStart
+                    } label: {
+                        Image(systemName: "door.left.hand.open")
+                    }
+                }
+
                 if state == .unstarted {
                     LobbyView(connected: connected) {
                         if connected.peers.count == 1 {
@@ -32,18 +44,17 @@ struct DuoGameView: View {
                             }
                         }
                     }
+                } else if state == .pausedGame {
+                    LobbyView(connected: connected) {
+                        BigButton("오류 발생. 다시 돌아가기") {
+                            P2PNetwork.outSession()
+                            P2PNetwork.removeAllDelegates()
+                            router.currentScreen = .gameStart
+                        }
+                    }
+                    .background(.white)
                 } else {
                     GameView()
-                    
-                    if state == .pausedGame {
-                        LobbyView(connected: connected) {
-                            BigButton("오류 발생. 다시 돌아가기") {
-                                P2PNetwork.makeMeHost()
-                                // 수정
-                            }
-                        }
-                        .background(.white)
-                    }
                 }
             }
             .border(Color.red, width: 10)

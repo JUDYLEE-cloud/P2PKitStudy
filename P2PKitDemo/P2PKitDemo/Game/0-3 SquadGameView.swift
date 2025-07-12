@@ -9,6 +9,8 @@ import SwiftUI
 import P2PKit
 
 struct SquadGameView: View {
+    @EnvironmentObject var router: AppRouter
+    
     @StateObject private var connected = SquadConnectedPeers()
     @State private var state: SquadGameTabState = .unstarted
     
@@ -20,6 +22,13 @@ struct SquadGameView: View {
             VStack {
                 Text("4인 게임")
                 Text("채널: \(P2PConstants.networkChannelName)")
+                Button {
+                    P2PNetwork.outSession()
+                    connected.out()
+                    router.currentScreen = .gameStart
+                } label: {
+                    Image(systemName: "door.left.hand.open")
+                }
                 
                 if state == .unstarted {
                     Text("4인 게임")

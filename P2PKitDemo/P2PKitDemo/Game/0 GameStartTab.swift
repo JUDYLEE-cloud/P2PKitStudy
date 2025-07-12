@@ -13,49 +13,41 @@ func setupP2PKit(channel: String) {
     P2PConstants.loggerEnabled = true
 }
 
+
+
 struct GameStartTab: View {
-    @State private var selectedGame: GameType?
+    @EnvironmentObject var router: AppRouter
     @State private var displayName: String = P2PNetwork.myPeer.displayName
 
     var body: some View {
         VStack {
-            Text(displayName)
-                .p2pTitleStyle()
-            
-            NavigationLink("이름 설정", destination: ChangeNameView(onNameChanged: {
-                            displayName = P2PNetwork.myPeer.displayName
-                        }))
-                        .padding()
-            
             NavigationStack {
                 VStack(spacing: 30) {
+                    Text(displayName)
+                        .p2pTitleStyle()
+                    
+                    NavigationLink("이름 설정", destination: ChangeNameView(onNameChanged: { 
+                                    displayName = P2PNetwork.myPeer.displayName
+                                }))
+                                .padding()
+                    
                     Button("2인 게임") {
-                        P2PNetwork.maxConnectedPeers = 2
+                        P2PNetwork.maxConnectedPeers = 1
                         P2PConstants.setGamePlayerCount(2)
                         P2PNetwork.resetSession()
-                        selectedGame = .duo
+                        router.currentScreen  = .duo
                     }
                     Button("3인 게임") {
-                        P2PNetwork.maxConnectedPeers = 3
+                        P2PNetwork.maxConnectedPeers = 2
                         P2PConstants.setGamePlayerCount(3)
                         P2PNetwork.resetSession()
-                        selectedGame = .triple
+                        router.currentScreen  = .triple
                     }
                     Button("4인 게임") {
-                        P2PNetwork.maxConnectedPeers = 4
+                        P2PNetwork.maxConnectedPeers = 3
                         P2PConstants.setGamePlayerCount(4)
                         P2PNetwork.resetSession()
-                        selectedGame = .squad
-                    }
-                }
-                .navigationDestination(item: $selectedGame) { game in
-                    switch game {
-                    case .duo:
-                        DuoGameView()
-                    case .triple:
-                        TripleGameView()
-                    case .squad:
-                        SquadGameView()
+                        router.currentScreen  = .squad
                     }
                 }
             }
@@ -75,4 +67,5 @@ struct GameStartTab: View {
 
 #Preview {
     GameStartTab()
+        .environmentObject(AppRouter())
 }
