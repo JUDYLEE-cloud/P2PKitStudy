@@ -29,9 +29,11 @@ struct GameResultView: View {
                 router.currentScreen = .gameStart
             }
         }
-        .task {
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 P2PNetwork.outSession()
                 P2PNetwork.removeAllDelegates()
+            }
         }
     }
 

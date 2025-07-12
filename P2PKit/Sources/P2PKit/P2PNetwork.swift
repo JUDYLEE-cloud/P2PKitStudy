@@ -88,13 +88,13 @@ public struct P2PNetwork {
             session.delegate = sessionListener
             session.start()
         }
-        if currentTurnPlayerName.value.isEmpty {
-            // Randomly assign the first turn to one of the peers including self
-            let candidates = [myPeer] + connectedPeers
-            if let firstPlayer = candidates.randomElement() {
-                currentTurnPlayerName.value = firstPlayer.displayName
-            }
-        }
+//        if currentTurnPlayerName.value.isEmpty {
+//            // Randomly assign the first turn to one of the peers including self
+//            let candidates = [myPeer] + connectedPeers
+//            if let firstPlayer = candidates.randomElement() {
+//                currentTurnPlayerName.value = firstPlayer.displayName
+//            }
+//        }
     }
     
     public static func connectionState(for peer: MCPeerID) -> MCSessionState? {
