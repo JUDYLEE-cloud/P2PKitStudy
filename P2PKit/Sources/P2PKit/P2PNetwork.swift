@@ -25,8 +25,8 @@ public struct P2PConstants {
 }
 
 public protocol P2PNetworkPeerDelegate: AnyObject {
-    func p2pNetwork(didUpdate peer: Peer) -> Void
-    func p2pNetwork(didUpdateHost host: Peer?)
+    func p2pNetwork(didUpdate peer: Peer) -> Void // 어떤 peer의 연결상태가 변경될때 호출
+    func p2pNetwork(didUpdateHost host: Peer?) // host가 바뀔 때 호출
 }
 
 public struct EventInfo: Codable {
@@ -81,7 +81,6 @@ public struct P2PNetwork {
     }()
     
     // MARK: - Public P2PSession Management
-
     public static func start() {
         if session.delegate == nil {
             P2PNetwork.hostSelector
@@ -102,7 +101,7 @@ public struct P2PNetwork {
     }
     
     public static func outSession(displayName: String? = nil) {
-        prettyPrint(level: .error, "♻️ Resetting Session!")
+        prettyPrint(level: .error, "♻️ Quitting Session!")
         let oldSession = session
         oldSession.disconnect()
         
@@ -170,14 +169,13 @@ class DataHandler {
 }
 
 // MARK: - Private
-
 private class P2PNetworkSessionListener {
     private var _peerDelegates = WeakArray<P2PNetworkPeerDelegate>()
     private var _dataHandlers = [String: WeakArray<DataHandler>]()
     
-    fileprivate func onHostUpdate(host: Peer?) {
+    fileprivate func onHostUpdate(host: Peer?) { // 호스트가 변경 되었을 때
         for delegate in _peerDelegates {
-            delegate?.p2pNetwork(didUpdateHost: host)
+            delegate?.p2pNetwork(didUpdateHost: host) // 그 때 뭐해요? -> p2pNetwork
         }
     }
     
@@ -204,6 +202,7 @@ private class P2PNetworkSessionListener {
     }
 }
 
+// P2PSession에서 연결 상태가 바뀌었을 때  _peerDelegates 배열(여러 명의 조수)에게 연결 상태 바뀐다고 알려주는 역할
 extension P2PNetworkSessionListener: P2PSessionDelegate {
     func p2pSession(_ session: P2PSession, didUpdate peer: Peer) {
         guard !P2PNetwork.soloMode else { return }

@@ -14,6 +14,8 @@ enum GameResult {
 }
 
 struct GameView: View {
+    @Binding var gameState: DuoGameTabState
+    
     // 각 판의 상태 (좌표, 플레이어 이름) (예: moves.value["0,1"] = "🐸 Judy’s iPhone")
     @StateObject private var moves = P2PSyncedObservable(name: "TicTacToeMoves", initial: [String: String]())
     // 현재 턴인 플레이어의 이름
@@ -64,6 +66,7 @@ struct GameView: View {
 
                                     if let winningPlayer = checkWinner() {
                                         winner.value = winningPlayer
+                                        gameState = .endGame
                                         return
                                     }
 
@@ -90,6 +93,9 @@ struct GameView: View {
                 Text("연결된 사람 수: \(P2PNetwork.connectedPeers.count + 1)")
             }
             .padding()
+            .onChange(of: winner.value) { _ in
+                gameState = .endGame
+            }
         }
     }
 
@@ -125,5 +131,5 @@ struct GameView: View {
 }
 
 #Preview {
-    GameView()
+    GameView(gameState: .constant(.startedGame))
 }

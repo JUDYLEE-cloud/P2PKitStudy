@@ -35,11 +35,13 @@ struct RootView: View {
                 case .gameStart:
                     GameStartTab()
                 case .duo:
-                    DuoGameView()
+                    ConnectView()
                 case .triple:
-                    TripleGameView()
+                    //
                 case .squad:
-                    SquadGameView()
+                    // 
+                    
+                case .none: Color.clear
                 }
             }
             .tag(0)

@@ -13,8 +13,6 @@ func setupP2PKit(channel: String) {
     P2PConstants.loggerEnabled = true
 }
 
-
-
 struct GameStartTab: View {
     @EnvironmentObject var router: AppRouter
     @State private var displayName: String = P2PNetwork.myPeer.displayName
@@ -35,19 +33,17 @@ struct GameStartTab: View {
                         P2PNetwork.maxConnectedPeers = 1
                         P2PConstants.setGamePlayerCount(2)
                         P2PNetwork.resetSession()
-                        router.currentScreen  = .duo
+                        router.currentScreen = .duo
                     }
                     Button("3인 게임") {
                         P2PNetwork.maxConnectedPeers = 2
                         P2PConstants.setGamePlayerCount(3)
                         P2PNetwork.resetSession()
-                        router.currentScreen  = .triple
                     }
                     Button("4인 게임") {
                         P2PNetwork.maxConnectedPeers = 3
                         P2PConstants.setGamePlayerCount(4)
                         P2PNetwork.resetSession()
-                        router.currentScreen  = .squad
                     }
                 }
             }

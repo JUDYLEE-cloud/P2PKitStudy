@@ -12,6 +12,8 @@ enum AppScreen {
     case duo
     case triple
     case squad
+    
+    case none
 }
 
 class AppRouter: ObservableObject {

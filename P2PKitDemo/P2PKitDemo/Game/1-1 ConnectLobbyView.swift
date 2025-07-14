@@ -73,12 +73,14 @@ class DuoConnectedPeers: ObservableObject {
 }
 
 extension DuoConnectedPeers: P2PNetworkPeerDelegate {
+    // 호스트가 변경 되었을 때
     func p2pNetwork(didUpdateHost host: Peer?) {
         DispatchQueue.main.async { [weak self] in
             self?.host = host
         }
     }
     
+    // 연결된 사람의 상태가 바뀌었을 때
     func p2pNetwork(didUpdate peer: Peer) {
         DispatchQueue.main.async { [weak self] in
             let limitedPeers = Array(P2PNetwork.connectedPeers.prefix(1))
@@ -89,3 +91,11 @@ extension DuoConnectedPeers: P2PNetworkPeerDelegate {
         }
     }
 }
+
+//var name: String = "Leeo"
+//
+//extension JudyJ: LeeoDelegate {
+//    
+//}
+//var age: LeeoDelegate = 25
+//name = age

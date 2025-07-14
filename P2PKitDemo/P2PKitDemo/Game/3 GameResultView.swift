@@ -17,23 +17,24 @@ struct GameResultView: View {
             Text(resultText)
                 .font(.largeTitle)
                 .padding()
+            
             Button("다시 시작") {
-//                P2PNetwork.outSession()
-//                P2PNetwork.removeAllDelegates()
-                // router.currentScreen = .gameStart
-                router.currentScreen = .duo
+                // 이건 뭘 선택하냐에 따라 바뀌어야 함
+                P2PNetwork.maxConnectedPeers = 1
+                P2PConstants.setGamePlayerCount(2)
+                
+                router.currentScreen = .none
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        router.currentScreen = .duo
+                    }
             }
             Button("나가기") {
-//                P2PNetwork.outSession()
-//                P2PNetwork.removeAllDelegates()
                 router.currentScreen = .gameStart
             }
         }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                P2PNetwork.outSession()
-                P2PNetwork.removeAllDelegates()
-            }
+        .task {
+            P2PNetwork.outSession()
+            P2PNetwork.removeAllDelegates()
         }
     }
 

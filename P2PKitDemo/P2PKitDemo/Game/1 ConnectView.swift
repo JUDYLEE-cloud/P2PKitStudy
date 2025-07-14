@@ -5,11 +5,12 @@
 import SwiftUI
 import P2PKit
 
-struct DuoGameView: View {
+struct ConnectView: View {
+    // let id: String
     @EnvironmentObject var router: AppRouter
 
     @StateObject private var connected = DuoConnectedPeers()
-    @State private var state: DuoGameTabState = .unstarted
+    @State private var state: GameTabState = .unstarted
     
     @State private var countdown: Int? = nil
     @State private var countdownTimer: Timer? = nil
@@ -22,8 +23,8 @@ struct DuoGameView: View {
                     Text("채널: \(P2PConstants.networkChannelName)")
                     Button {
                         P2PNetwork.outSession()
-                        // connected.out()
                         P2PNetwork.removeAllDelegates()
+                        
                         router.currentScreen = .gameStart
                     } label: {
                         Image(systemName: "door.left.hand.open")
@@ -54,12 +55,13 @@ struct DuoGameView: View {
                     }
                     .background(.white)
                 } else {
-                    GameView()
+                    GameView(gameState: $state)
                 }
             }
             .border(Color.red, width: 10)
         }
         .onAppear {
+            P2PNetwork.resetSession()
             connected.start()
         }
         .onChange(of: connected.peers.count) {
@@ -75,7 +77,6 @@ struct DuoGameView: View {
             }
         }
     }
-    
 
     private func BigButton(_ text: String, action: @escaping () -> Void) -> some View {
         Button(action: action, label: {
@@ -102,8 +103,3 @@ struct DuoGameView: View {
     }
 }
 
-private enum DuoGameTabState {
-    case unstarted
-    case startedGame
-    case pausedGame
-}
