@@ -27,36 +27,28 @@ func setupP2PKit() {
 
 struct ContentView: View {
     var body: some View {
-        Group {
-            TabView() {
-                GameTab()
-                    .tag(0)
-                    .edgesIgnoringSafeArea(.top)
-                    .tabItem {
-                        Label("Game", systemImage: "gamecontroller.fill")
-                    }
-                DebugTab
-                    .tag(1)
-                    .safeAreaPadding()
-                    .tabItem {
-                        Label("Debug", systemImage: "newspaper.fill")
-                    }
-            }
-        }
-        .tint(.mint)
+//        Group {
+//            TabView() {
+//                GameTab()
+//                    .tag(0)
+//                    .edgesIgnoringSafeArea(.top)
+//                    .tabItem {
+//                        Label("Game", systemImage: "gamecontroller.fill")
+//                    }
+//                DebugTab
+//                    .tag(1)
+//                    .safeAreaPadding()
+//                    .tabItem {
+//                        Label("Debug", systemImage: "newspaper.fill")
+//                    }
+//            }
+//        }
+//        .tint(.mint)
+        
+        DebugTabView()
         .task {
             setupP2PKit()
         }
-    }
-        
-    var DebugTab: some View {
-        VStack(alignment: .leading) {
-            PeerListView()
-            SyncedCounter()
-            SyncedCircles()
-            DebugDataView()
-            Spacer()
-        }.frame(maxWidth: 480)
     }
 }
 

@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 5/2/24.
 //
 
+// 실제 MultipeerConnectivity 세션 관리의 핵심. 연결/전송/수신 등의 내부 로직 담당
+
 import MultipeerConnectivity
 
 // MARK: - P2PSession
@@ -12,6 +14,9 @@ import MultipeerConnectivity
 protocol P2PSessionDelegate: AnyObject {
     func p2pSession(_ session: P2PSession, didUpdate peer: Peer) -> Void
     func p2pSession(_ session: P2PSession, didReceive data: Data, dataAsJson json: [String: Any]?, from peerID: MCPeerID)
+    
+    // 알람
+    func p2pSession(_ session: P2PSession, didReceiveInvitationFrom peerID: MCPeerID, handler: @escaping (Bool) -> Void)
 }
 
 class P2PSession: NSObject {
@@ -41,13 +46,19 @@ class P2PSession: NSObject {
     }
     
     // Debug only, use connectedPeers instead.
-    var allPeers: [Peer] {
+//    var allPeers: [Peer] {
+//        peersLock.lock(); defer { peersLock.unlock() }
+//        let peerIDs = session.connectedPeers.filter {
+//            foundPeers.contains($0)
+//        }
+//        prettyPrint(level: .debug, "all peers: \(peerIDs)")
+//        return peerIDs.compactMap { peer(for: $0) }
+//    }
+    
+    // 내가 만든.. 찾은 사람들
+    var discoveredPeers: [Peer] {
         peersLock.lock(); defer { peersLock.unlock() }
-        let peerIDs = session.connectedPeers.filter {
-            foundPeers.contains($0)
-        }
-        prettyPrint(level: .debug, "all peers: \(peerIDs)")
-        return peerIDs.compactMap { peer(for: $0) }
+        return foundPeers.compactMap { peer(for: $0) }
     }
     
     // Callers need to protect this with peersLock
@@ -190,7 +201,9 @@ extension P2PSession: MCSessionDelegate {
         case .connecting:
             break
         case .notConnected:
-            invitePeerIfNeeded(peerID)
+            // 수정해야 함
+            break
+            // invitePeerIfNeeded(peerID)
         default:
             fatalError(#function + " - Unexpected multipeer connectivity state.")
         }
@@ -204,7 +217,15 @@ extension P2PSession: MCSessionDelegate {
     
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        
         if let json = json, receiveLoopbackTest(session, didReceive: json, fromPeer: peerID) {
+            return
+        }
+        
+        if let type = json?["type"] as? String, type == "cancel_invitation" {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .cancelInvitationNotification, object: nil)
+            }
             return
         }
         
@@ -254,7 +275,7 @@ extension P2PSession: MCNearbyServiceBrowserDelegate {
                 startLoopbackTest(peerID)
             }
             
-            invitePeerIfNeeded(peerID)
+            // invitePeerIfNeeded(peerID)
             let peer = peer(for: peerID)
             peersLock.unlock()
             
@@ -287,8 +308,13 @@ extension P2PSession: MCNearbyServiceBrowserDelegate {
 extension P2PSession: MCNearbyServiceAdvertiserDelegate {
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         if isNotConnected(peerID) {
-            prettyPrint("Accepting Peer invite from [\(peerID.displayName)]")
-            invitationHandler(true, self.session)
+//            prettyPrint("Accepting Peer invite from [\(peerID.displayName)]")
+//            invitationHandler(true, self.session)
+            
+            prettyPrint("Received Peer invite from [\(peerID.displayName)]")
+            delegate?.p2pSession(self, didReceiveInvitationFrom: peerID) { accepted in
+                invitationHandler(accepted, accepted ? self.session : nil)
+            }
         }
     }
     
@@ -300,7 +326,32 @@ extension P2PSession: MCNearbyServiceAdvertiserDelegate {
 // MARK: - Private - Invite Peers
 
 extension P2PSession {
+    
+    public func invite(_ peerID: MCPeerID) {
+        peersLock.lock()
+        defer { peersLock.unlock() }
+        
+        guard isNotConnected(peerID) else { return }
+        
+        prettyPrint("Manually inviting [\(peerID.displayName)]")
+        browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
+    }
+    
+    public func cancelInvitation(to peerID: MCPeerID) {
+        peersLock.lock()
+        defer { peersLock.unlock() }
+
+        guard foundPeers.contains(peerID) else { return }
+
+        prettyPrint("Sending cancel invitation to [\(peerID.displayName)]")
+        let cancelMessage: [String: Any] = ["type": "cancel_invitation"]
+        if let data = try? JSONSerialization.data(withJSONObject: cancelMessage) {
+            send(data: data, to: [peerID], reliable: true)
+        }
+    }
+    
     // Call this from inside a peerLock()
+    // 자동으로 피어(peer) 연결
     private func invitePeerIfNeeded(_ peerID: MCPeerID) {
         func invitePeer(attempt: Int) {
             prettyPrint("Inviting peer: [\(peerID.displayName)]. Attempt \(attempt)")
@@ -342,7 +393,7 @@ extension P2PSession {
                         guard let self = self else { return }
                         self.peersLock.lock()
                         self.invitesHistory[peerID]?.nextInviteScheduled = false
-                        self.invitePeerIfNeeded(peerID)
+                        // self.invitePeerIfNeeded(peerID) // 자동 연결
                         self.peersLock.unlock()
                     }
                     invitesHistory[peerID]?.nextInviteScheduled = true
@@ -372,4 +423,8 @@ private struct InviteHistory {
 
 private struct DiscoveryInfo {
     let discoveryId: Peer.Identifier
+}
+
+extension Notification.Name {
+    static let cancelInvitationNotification = Notification.Name("cancelInvitationNotification")
 }

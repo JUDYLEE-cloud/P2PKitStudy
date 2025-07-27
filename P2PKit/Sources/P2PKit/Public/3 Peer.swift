@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 4/24/24.
 //
 
+// 피어에 대한 모델 정보 (id, 이름 등)
+
 import MultipeerConnectivity
 
 public struct Peer {

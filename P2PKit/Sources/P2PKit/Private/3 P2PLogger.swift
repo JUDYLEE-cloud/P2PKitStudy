@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 4/26/24.
 //
 
+// 디버깅용 로거
+
 import OSLog
 
 fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "P2PLogger")

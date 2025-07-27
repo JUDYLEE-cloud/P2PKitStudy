@@ -1,6 +1,8 @@
 //
 //  P2PHostSelector.swift
 
+// 호스트 결정 로직 (여러 피어 중 누구를 호스트로 할지 선정)
+
 import Foundation
 import MultipeerConnectivity
 

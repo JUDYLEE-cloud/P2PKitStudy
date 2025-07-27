@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 4/24/24.
 //
 
+// 기타 보조 함수, 유틸리티 (인코딩/디코딩 등)
+
 import Foundation
 import MultipeerConnectivity
 import SwiftUI

@@ -1,6 +1,8 @@
 //
 //  WeakArray.swift
 
+// delegate나 observer를 약한 참조로 보관하기 위한 유틸 클래스
+
 private class WeakRef {
     weak var ref: AnyObject?
     init(_ ref: AnyObject) {

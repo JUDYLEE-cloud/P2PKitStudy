@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 5/22/24.
 //
 
+// 실시간 이벤트 전송 (예: 위치, 움직임 등)
+
 import MultipeerConnectivity
 
 public class P2PEventService<T: Codable> {

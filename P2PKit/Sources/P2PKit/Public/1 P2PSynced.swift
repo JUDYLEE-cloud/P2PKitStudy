@@ -5,6 +5,8 @@
 //  Created by Paige Sun on 5/3/24.
 //
 
+// Codable 데이터 양방향 동기화. 핵심 API
+
 import Foundation
 import MultipeerConnectivity
 
